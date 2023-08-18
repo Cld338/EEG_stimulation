@@ -1,8 +1,8 @@
 from PIL import Image, ImageTk
 from tkinter import PhotoImage
 import multiprocessing as mp
-from local_lib.openvibe_tool import *
-from local_lib.private_tool import *
+from local_libs.openvibe_tool import *
+from local_libs.private_tool import *
 import tkinter as tk
 import numpy as np
 import itertools
@@ -16,7 +16,7 @@ def random_sequence():
     random.shuffle(arr1)
     random.shuffle(arr2)
     print(arr1+arr2[:6])
-    np.save(f"{currDir}/arr.npy", np.array(arr1+arr2[:6]))
+    np.save(f"{currDir}/src/data/arr.npy", np.array(arr1+arr2[:6]))
 
 
 
@@ -29,10 +29,10 @@ class ArrowDisplayApp:
         self.root.attributes('-fullscreen', True)
         self.currDir = os.getcwd()
         self.arrow_images = [
-            self.currDir+"/src/arrow_up.png",
-            self.currDir+"/src/arrow_down.png",
-            self.currDir+"/src/arrow_left.png",
-            self.currDir+"/src/arrow_right.png"
+            self.currDir+"/src/images/arrow_up.png",
+            self.currDir+"/src/images/arrow_down.png",
+            self.currDir+"/src/images/arrow_left.png",
+            self.currDir+"/src/images/arrow_right.png"
         ]
         self.session = 0
         self.arr = arr
@@ -81,7 +81,7 @@ class ArrowDisplayApp:
         ratio = 0.5
         arrow_image = arrow_image.resize((round(arrow_image.size[0]*ratio), round(arrow_image.size[1]*ratio)), Image.ANTIALIAS)
         self.arrow_photo = ImageTk.PhotoImage(arrow_image)
-        dot_image = Image.open(self.currDir+"/src/dot.png")
+        dot_image = Image.open(self.currDir+"/src/images/dot.png")
         dot_image = dot_image.resize((766, 766), Image.ANTIALIAS)
         self.dot_photo = ImageTk.PhotoImage(dot_image)
 
@@ -101,7 +101,7 @@ class ArrowDisplayApp:
                 # signal_array = np.array([np.array(i) for i in list(signal_ls)])
                 # print(signal_array)
                 # np.save(f"{self.currDir}/signal.npy", signal_array)
-                saveJson(f"{self.currDir}/signal.json", list(signal_ls))
+                saveJson(f"{self.currDir}/src/data/signal.json", list(signal_ls))
                 self.p1.kill()
                 self.root.quit()
             
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     currDir = os.getcwd()
     manager = mp.Manager()
     signal_ls = manager.list()
-    arr = np.load(f"{currDir}/arr.npy")
+    arr = np.load(f"{currDir}/src/data/arr.npy")
     print(arr)
     root = tk.Tk()
     app = ArrowDisplayApp(root, arr, signal_ls)
