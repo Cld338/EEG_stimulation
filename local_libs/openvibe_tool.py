@@ -22,7 +22,7 @@ class LSL():
                 print("\rfinding connection...", end="")
         return
 
-    def receiveData(self) -> tuple[list, float]:
+    def receiveData(self) -> tuple:
         """LSL에서 데이터 수신"""
         try:
             return self.inlet.pull_sample()
@@ -46,7 +46,7 @@ class LSL():
             prevTime = currTime
         return
     
-    def collectDataByTime(self, t:float) -> tuple[list[list], float]:
+    def collectDataByTime(self, t:float) -> tuple:
         """0~t ms 까지의 데이터"""
         deltaTime = 0   
         # print(deltaTime)
@@ -63,16 +63,3 @@ class LSL():
             prevTime = currTime
             
         return (dataTrial, deltaTime)
-    
-def fft(signal:list, t:float) -> tuple[list]:
-        """==input==
-        signal : Channel * Sample
-        t: total time (sec)
-
-        ==output==
-        """
-        s_fft = np.fft.fft(signal) # 추후 IFFT를 위해 abs를 취하지 않은 값을 저장한다.
-        amplitude = abs(s_fft)*(2/len(s_fft)) # 2/len(s)을 곱해줘서 원래의 amp를 구한다.amplitude = abs(s_fft)*(2/len(s_fft)) # 2/len(s)을 곱해줘서 원래의 amp를 구한다.
-        frequency = np.fft.fftfreq(len(s_fft), t)
-        
-        return (amplitude, frequency)
