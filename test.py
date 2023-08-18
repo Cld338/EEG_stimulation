@@ -129,7 +129,7 @@ if __name__ == "__main__":
     currDir = os.getcwd()
     manager = mp.Manager()
     signal_ls = manager.list()
-    arr = np.load(f"{currDir}/arr.json")
+    arr = np.load(f"{currDir}/arr.npy")
     print(arr)
     root = tk.Tk()
     app = ArrowDisplayApp(root, arr, signal_ls)
