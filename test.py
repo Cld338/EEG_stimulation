@@ -1,8 +1,8 @@
 from PIL import Image, ImageTk
 from tkinter import PhotoImage
 import multiprocessing as mp
-from openvibe_tool import *
-from private_tool import *
+from local_lib.openvibe_tool import *
+from local_lib.private_tool import *
 import tkinter as tk
 import numpy as np
 import itertools
@@ -27,7 +27,7 @@ class ArrowDisplayApp:
         self.root = root
         self.root.title("Arrow Display App")
         self.root.attributes('-fullscreen', True)
-        self.currDir = os.path.dirname(os.path.realpath(__file__))
+        self.currDir = os.getcwd()
         self.arrow_images = [
             self.currDir+"/src/arrow_up.png",
             self.currDir+"/src/arrow_down.png",
@@ -126,9 +126,10 @@ class ArrowDisplayApp:
 
 
 if __name__ == "__main__":
+    currDir = os.getcwd()
     manager = mp.Manager()
     signal_ls = manager.list()
-    arr = np.load(f"{currDir}/arr.npy")
+    arr = np.load(f"{currDir}/arr.json")
     print(arr)
     root = tk.Tk()
     app = ArrowDisplayApp(root, arr, signal_ls)
