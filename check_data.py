@@ -4,5 +4,5 @@ import os
 
 currDir = os.path.dirname(os.path.realpath(__file__))
 
-ls = loadJson(f"{currDir}/signal.json")
-print(ls[2])
+ls = loadJson(f"{currDir}/src/data/signal.json")
+print(ls[0])
