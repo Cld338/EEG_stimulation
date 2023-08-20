@@ -1,29 +1,30 @@
+from local_libs.openvibe_tool import *
+from local_libs.private_tool import *
 from PIL import Image, ImageTk
 from tkinter import PhotoImage
 import multiprocessing as mp
-from local_libs.openvibe_tool import *
-from local_libs.private_tool import *
 import tkinter as tk
 import numpy as np
+import threading
 import itertools
 import random
 import os
 
 def random_sequence():
     seq = [0, 1, 2, 3] # 상하좌우
-    arr1 = list(itertools.permutations(seq, 4))
-    arr2 = arr1.copy()
+    arr1 = list(itertools.permutations(seq, 4))*8
     random.shuffle(arr1)
-    random.shuffle(arr2)
-    print(arr1+arr2[:6])
-    np.save(f"{currDir}/src/data/arr.npy", np.array(arr1+arr2[:6]))
+    print(arr1[:180])
+    np.save(f"{currDir[:-11]}/src/data/arr.npy", np.array(arr1[:180]))
 
 
 
 class ArrowDisplayApp:
-    def __init__(self, root, arr, signal_ls):
-        self.p1 = mp.Process(target=self.process_receive, name="receiver", args=[signal_ls])
-        self.p1.start()
+    def __init__(self, root, arr):
+        self.trackIdx = len(filesInFolder(currDir+"/src/data/ohjihun"))+1
+        self.lsl = LSL()
+        self.lsl.connect()
+        self.signal_ls = []
         self.root = root
         self.root.title("Arrow Display App")
         self.root.attributes('-fullscreen', True)
@@ -35,6 +36,7 @@ class ArrowDisplayApp:
             self.currDir+"/src/images/arrow_right.png"
         ]
         self.session = 0
+        self.started = False
         self.arr = arr
         self.current_arrow_index = 0
         self.arrow_label = None
@@ -45,15 +47,13 @@ class ArrowDisplayApp:
         self.update_arrow_image()
         self.root.after(0, self.initial_window)
 
-    def process_receive(self, signal_ls):
-        lsl = LSL()
-        lsl.connect()
-        lsl.inlet.flush()
+    def process_receive(self):
+        self.lsl.inlet.flush()
         while True:
-            signal = lsl.receiveData()
-            signal_ls.append(signal)
-        
-    def clear_window(self):
+            signal = self.lsl.receiveData()
+            self.signal_ls.append(signal)
+
+    def clear_window(self): 
         if self.arrow_label:
             self.arrow_label.destroy()
         if self.a:
@@ -64,19 +64,24 @@ class ArrowDisplayApp:
             self.btnStart.destroy()
 
     def btnStartCmd(self):
-        # if self.isConnected:
-        self.display_none(5000, 1)
+        # self.p1 = mp.Process(target=self.process_receive, name="receiver", args=[signal_ls])
+        # self.p1.start()
+        self.thread = threading.Thread(target=self.process_receive)
+        self.thread.start()
+        print(1)
+        # self.started = Truex
+        self.display_none(10000, 1)
 
     def initial_window(self):
         self.clear_window()
-        self.a = tk.Label(self.root, width=200, height=20, background="white")
+        self.a = tk.Label(self.root, width=200, height=26, background="white")
         self.a.pack()
         self.btnStart = tk.Button(self.root, width=12, height=4,text="Start", command=self.btnStartCmd)
         self.btnStart.pack()
 
 
     def update_arrow_image(self):
-        image_path = self.arrow_images[self.arr[self.session][self.current_arrow_index]]
+        image_path = self.arrow_images[self.arr[self.session+6*(self.trackIdx-1)][self.current_arrow_index-1]]
         arrow_image = Image.open(image_path)
         ratio = 0.5
         arrow_image = arrow_image.resize((round(arrow_image.size[0]*ratio), round(arrow_image.size[1]*ratio)), Image.ANTIALIAS)
@@ -86,26 +91,26 @@ class ArrowDisplayApp:
         self.dot_photo = ImageTk.PhotoImage(dot_image)
 
     def display_next_arrow(self):
-        self.update_arrow_image()
-        self.a = tk.Label(self.root, width=200, height=12, background="white")
-        self.a.pack()
-        self.arrow_label = tk.Label(self.root, image=self.arrow_photo, background="white")
-        self.arrow_label.pack()
-        self.current_arrow_index += 1
-        if self.current_arrow_index == 4:
-            self.root.after(4000, self.display_none, 15000, 1)
+        print(self.current_arrow_index)
+        if self.current_arrow_index == 5:
+            self.root.after(4000, self.display_none, 3000, 2)
             self.current_arrow_index = 0
             self.session += 1
             print(self.session)
-            if self.session==2:
+            if self.session==6:
                 # signal_array = np.array([np.array(i) for i in list(signal_ls)])
                 # print(signal_array)
                 # np.save(f"{self.currDir}/signal.npy", signal_array)
-                saveJson(f"{self.currDir}/src/data/signal.json", list(signal_ls))
-                self.p1.kill()
+                saveJson(f"{self.currDir}/src/data/ohjihun/Track{self.trackIdx}_chair.json", list(self.signal_ls))
+                self.root.destroy()
                 self.root.quit()
-            
-        else:
+        else:   
+            self.update_arrow_image()
+            self.a = tk.Label(self.root, width=200, height=12, background="white")
+            self.a.pack()
+            self.arrow_label = tk.Label(self.root, image=self.arrow_photo, background="white")
+            self.arrow_label.pack()
+            self.current_arrow_index += 1
             self.root.after(4000, self.display_none, 3000, 2)
 
     def display_none(self, ms, flag):
@@ -116,7 +121,6 @@ class ArrowDisplayApp:
         else:
             """Trial 종료"""
             self.root.after(ms, self.display_next_arrow)
-        
 
     def display_dot(self):
         self.clear_window()
@@ -126,11 +130,11 @@ class ArrowDisplayApp:
 
 
 if __name__ == "__main__":
+    # random_sequence()
     currDir = os.getcwd()
     manager = mp.Manager()
-    signal_ls = manager.list()
     arr = np.load(f"{currDir}/src/data/arr.npy")
     print(arr)
     root = tk.Tk()
-    app = ArrowDisplayApp(root, arr, signal_ls)
+    app = ArrowDisplayApp(root, arr)
     root.mainloop()
